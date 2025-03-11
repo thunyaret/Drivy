@@ -3,7 +3,7 @@ from routing import app, rt
 import BackEnd
 company = BackEnd.company
 
-@rt('/showcar')
+@rt('/showcar',methods=["GET"])
 def showcar():
     return Container(
         Style("""
@@ -112,7 +112,7 @@ def showcar():
                             Td(str(car._Car__price)),
                             Td(car.get_status()),
                             Td(car._Car__color),
-                            Td(Button("Select", type="button", onclick="window.location.href='/reservation'"))
+                            Td(Form(Button("Select", type="submit"),action = "/reservation", method = "GET"))
                         ) for car in company.get_cars()
                     ],
                     {"style": "width: 100%;"}

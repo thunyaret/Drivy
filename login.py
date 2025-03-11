@@ -15,7 +15,7 @@ def get(success_message=None, error_message=None):
                 font-size: 18px; 
                 font-weight: bold; 
                 background: transparent; 
-                border: none; 
+                border: none;
                 outline: none; 
                 padding: 10px 20px; 
                 cursor: pointer; 

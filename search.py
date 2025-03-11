@@ -4,7 +4,7 @@ import BackEnd
 import login
 company = BackEnd.company
 
-@rt('/search', methods=["GET","POST"])
+@rt('/search', methods=["GET"])
 def search():
     return Container(
         Style("""
@@ -91,6 +91,7 @@ def search():
                     style="max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);"
                 ),
                 Script("""
+                    // Update the minimum value of the end date based on the selected start date
                     document.getElementById('start_date').addEventListener('change', function() {
                         var startDate = this.value;
                         document.getElementById('end_date').min = startDate;
