@@ -1,3 +1,4 @@
+from datetime import datetime
 # สถานที่รถ -----------------------------------------------------------------------
 class Location:
     def __init__(self, id, name):
@@ -11,7 +12,7 @@ class Location:
         return self.__name
 # รถ -----------------------------------------------------------------------
 class Car:
-    def __init__(self, id, model, licensecar, price, status, color, location:Location,pic):
+    def __init__(self, id, model, licensecar, price, color, location:Location,pic, status="available"):
         self.__id = id
         self.__model = model
         self.__licensecar = licensecar
@@ -28,11 +29,11 @@ class Car:
     
     def get_review(self):
         for review in self.__reviews:
-            return (review.get_comment(), review.get_date())
+            return (f"MESSAGE :{review}")
     
     def get_rating(self):
         for rating in self.__ratings:
-            return rating
+            return (f"AVG RANTING :{rating}")
 
     def get_location(self):
         return self.__location
@@ -51,6 +52,11 @@ class Car:
     
     def get_status(self):
         return self.__status
+    
+    def set_status(self):
+        if self.__status == "available":
+            self.__status = "reserved"
+            return self.__status
     
     def get_color(self):
         return self.__color
@@ -141,7 +147,7 @@ class User(Account):
 
 # จอง -----------------------------------------------------------------------
 class Reservation:
-    def __init__(self, id, renter: User, car: Car, start_date, end_date, price, driver=None, promotion=None, insurance=None):
+    def __init__(self, id, renter: User, car: Car, start_date:str, end_date:str, price, driver=None, promotion=None, insurance=None):
         self.__id = id
         self.__renter = renter
         self.__car = car
@@ -152,6 +158,14 @@ class Reservation:
         self.__insurance = insurance
         self.__price = price
         self.__location = car.get_location()
+
+    @staticmethod
+    def count_date(start_date, end_date):
+        date_format = "%Y-%m-%d"
+        start_date = datetime.strptime(start_date, date_format)
+        end_date = datetime.strptime(end_date, date_format)
+        delta = end_date - start_date
+        return delta.days
 
     def get_location(self):
         return self.__location
@@ -193,6 +207,8 @@ class Reservation:
     def update_status_car(self, new_status="reserved"):
         self.__car.status_car(new_status)
         return self.__car.get_status()
+    
+    
 
 # เก็บส่วนลด -----------------------------------------------------------------------
 class Promotion:
@@ -204,11 +220,12 @@ class Promotion:
     def get_id(self):
         return self.__id
     
+    def get_code(self):
+        return self.__code
+    
     def get_percent(self):
         return self.__percent
 
-    def check_promotion(self, code):
-        return self.__code == code
 
 
 
@@ -261,13 +278,18 @@ class Payment:
 
 # ประกัน --------------------------------------------------------------------------
 class Insurance:
-    def __init__(self, id, name, detail):
+    def __init__(self, id, name, detail, price_insurance):
         self.__id = id
         self.__name = name
         self.__detail = detail
+        self.__price_insurance = price_insurance
+
+    def get_price_insurance(self):
+        return self.__price_insurance
 
     def get_id(self):
-        return self.__id    
+        return self.__id  
+      
     def get_name(self):
         return self.__name
     
@@ -287,6 +309,21 @@ class Company:
         self.__cars = []        # รวมรถทั้งหมด
         self.__insurances = []
         self.__jobs = []
+
+    def get_insurance(self):
+        return self.__insurances
+    
+    def add_insurance(self, insurance: Insurance):
+        self.__insurances.append(insurance)
+
+    def get_promotions(self):
+        return self.__promotions
+    
+    def add_promotion(self, promotion: Promotion):
+        self.__promotions.append(promotion)
+
+    def get_detailcars(self):
+        return self.__detailcars
 
     def get_reservations(self):
         return self.__reservations
@@ -382,12 +419,26 @@ company.add_user(user1)
 company.add_driver(driver1)
 company.add_user(admin1)
 
+promotion1 = Promotion(1, "PROMO1", 10)
+promotion2 = Promotion(2, "PROMO2", 20)
+company.add_promotion(promotion1)
+company.add_promotion(promotion2)
+
+insurance1 = Insurance(1, "insurance1", "insurance for accident pay 10,000 bath", 100)
+insurance2 = Insurance(2, "insurance2", "insurance for accident pay 20,000 bath", 200)
+company.add_insurance(insurance1)
+company.add_insurance(insurance2)
+
 # ฟังก์ชันสำหรับการเริ่มต้นข้อมูลตัวอย่าง (จะถูกเรียกใช้ทุกครั้งที่ module ถูก import)
     # ตรวจสอบว่าข้อมูลรถยังไม่มีอยู่ ให้เพิ่มข้อมูลตัวอย่าง
         # สร้าง instance สำหรับ Admin, Driver, และ User
 # สร้าง instance ของรถ
-car1 = Car("1", "Toyota", "D0-1125", 2000, "available", "black", Location(1, "Bangkok"),pic="/img/toyota_black.png")
+
+car1 = Car("1", "Toyota", "D0-1125", 2000, "black", Location(1, "Bangkok"), "/img/toyota_black.png", status="available")
+car2 = Car("2", "Honda", "D0-1135", 2500, "red", Location(2, "Bangkok"), "/img/honda_red.png", status="available")
+company.add_car(car2)
 company.add_car(car1)
+
 
 # ทดสอบเพิ่มรีวิวและเรทติ้งให้รถ
 review1 = Review("Excellent car", "2025-03-01")
@@ -395,18 +446,8 @@ car1.add_review_car(review1)
 car1.add_rating_car(4.5)
 car1.add_rating_car(5.0)
 
-# สร้างรถเพิ่มอีกคัน
-car2 = Car("2", "Honda", "D0-1126", 2500, "available", "white", Location(2, "Chiang Mai"),pic="/img/toyota_white.jpg")
-company.add_car(car2)
+
 
 # เรียกใช้งาน init_data() เมื่อ module ถูก import
 reservation1 = Reservation(1, user1, car1, "2025-03-01", "2025-03-03", 2000)
 company.add_reservation(reservation1)
-# ทดสอบการรัน backend เมื่อรันไฟล์โดยตรง
-if __name__ == "__main__":
-    print("Registered Users:")
-    for u in company.get_users():
-        print(u.get_username(), u.get_role())
-    print("Cars in Company:")
-    for c in company.get_cars():
-        print(c.get_id(), c.get_model(), c.get_licensecar(), c.get_price(), c.get_status(), c.get_color())

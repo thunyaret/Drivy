@@ -112,10 +112,7 @@ def cal_data(model: str, start_date: str, end_date: str):
         show_car[:] = company.get_cars()
     else:
         show_car[:] = [car for car in company.get_cars() if car.get_model() == model]
-    
-    # Debug: แสดงข้อมูลที่ได้ใน console
-    print("Selected model:", model)
-    print("Filtered cars:", [car.get_model() for car in show_car])
+
     
     return RedirectResponse("/showcar")
 

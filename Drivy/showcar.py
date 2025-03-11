@@ -103,7 +103,8 @@ def showcar():
                         Th("License"),
                         Th("Price"),
                         Th("Color"),
-                        Th("Select")
+                        Th("status"),
+                        Th("reservation")
                     ),
                      # สร้างแถวข้อมูลรถจาก backend
                     *[Tr(
@@ -113,7 +114,8 @@ def showcar():
                             Td(car.get_licensecar()),
                             Td(car.get_price()),
                             Td(car.get_color()),
-                            Td(Button("Select", type="submit"),action = "/reservation", method = "GET")
+                            Td(car.get_status()),
+                            Td(Button("rent", type="submit"),action = "/reservation", method = "GET")
                         ) for car in search.show_car],
                     style= "width: 100%;"
                 ),
@@ -122,3 +124,4 @@ def showcar():
             style="background: #AEEEEE; padding: 20px; min-height: 100vh;"
         )
     )
+serve()

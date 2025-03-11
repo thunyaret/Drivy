@@ -4,7 +4,7 @@ import BackEnd
 company = BackEnd.company
 reservation = company.get_reservations()
 
-@rt('/driver')
+@rt('/driver',methods=["GET","POST"])
 def driver():
     global reservation
     return Container(

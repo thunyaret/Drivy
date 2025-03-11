@@ -1,106 +1,73 @@
 from fasthtml.common import *
 from routing import app, rt
 import BackEnd
+import search
+date = 0
+reservation = BackEnd.Reservation
 company = BackEnd.company
+car = BackEnd.Car
+total = 0
+# Endpoint สำหรับแสดงฟอร์มจองรถ
+@rt('/reservation/form', methods=["GET", "POST"])
+def reservation_form():
+    return Container(
+        Style("""
+            body { font-family: Arial; background: #F5F5F5; padding: 20px; }
+            .form-container { max-width: 500px; margin: 40px auto; background: #FFF; padding: 20px; 
+                               border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+            label { display: block; margin-top: 10px; font-weight: bold; }
+            input { width: 100%; padding: 8px; margin-top: 5px; }
+            button { margin-top: 20px; background: #4CAF50; color: white; border: none; 
+                     padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+            button:hover { background: #45a049; }
+        """),
+        Div(
+            H2("จองรถ"),
+            Form(
+                # ส่งข้อมูลแบบ POST ไปที่ /reservation
+                *[Div(
+                    Label(car.get_name()),
+                    Img(car.get_pic()),
+                    Label("PRICE : " + str(car.get_price()) + " บาท/วัน"),
+                    Label("STATUS : " + car.get_status()),
+                    Label("START :" + search.start_date),
+                    Label("END :" + search.end_date),
+                    Label("DATE OF RENT : " + str(date)),
+                    Label("REVIEW : " + car.get_review()),
+                    Label("RATING : " + car.get_rating()),
+                
+                    Label("CODE PROMOTION :"),
+                    Input(name="promotion_code", type="text", placeholder="CODE PROMOTION"),
+                    Label("Have insurance?", type="text", name="insurance_checkbox"),
+                    *[Input(insu.get_detail(), type="checkbox",id="insurance",name="insurance")for insu in company.get_insurance()],
 
-@rt('/reservation')
-def reservation_page():
-    # return H1("kgjdshghasgha")
-    # ดึงรายการ reservation จาก backend
-    reservations = company._Company__reservations
-    
-    if reservations:
-        reservation_info = Table(
-            *[
-                Tr(
-                    Td(res.get_id()),
-                    Td(res.get_renter().get_username()),
-                    Td(res._Reservation__car.get_model()),
-                    Td(res.get_start_date()),
-                    Td(res.get_end_date()),
-                    Td(str(res.get_price())),
-                    Td(res._Reservation__car.get_status()),
-                    Td(res.get_driver().get_username() if res.get_driver() else "Not assigned")
-                ) for res in reservations
-            ],
-            {"style": "width: 100%;"}
+                    Label("TOTAL PRICE : " + total ,id="total_price",name="total_price"),
+
+                    Button("payment", type="submit")
+                )for car in search.show_car],
+                action="/pay", method="POST"
+            ),
+            _class="form-container"
         )
-    else:
-        reservation_info = P("No reservation foundhh.")
+    )
 
-     
-    return       Tr(
-                    Th("Reservation ID"),
-                    Th("Renter Username"),
-                    Th("Car Model"),
-                    Th("Start Date"),
-                    Th("End Date"),
-                    Th("Price"),
-                    Th("Car Status"),
-                    Th("Driver")
-                ),Container(
-                    Style("""
-                        body {
-                            font-family: Arial, sans-serif;
-                            background: #F5F5F5;
-                            padding: 20px;
-                        }
-                        .header {
-                            width: 100%;
-                            background: #4682B4;
-                            padding: 20px;
-                            color: #FFF;
-                            text-align: center;
-                            margin-bottom: 20px;
-                        }
-                        .content {
-                            max-width: 800px;
-                            margin: auto;
-                            background: #FFF;
-                            padding: 20px;
-                            border-radius: 10px;
-                            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                            text-align: center;
-                        }
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin-top: 20px;
-                        }
-                        th, td {
-                            padding: 10px;
-                            border: 1px solid #ddd;
-                            text-align: center;
-                        }
-                        th {
-                            background-color: #f2f2f2;
-                        }
-                        button {
-                            background: #4CAF50;
-                            color: #FFF;
-                            border: none;
-                            padding: 10px 20px;
-                            border-radius: 5px;
-                            cursor: pointer;
-                            margin: 10px;
-                        }
-                        button:hover {
-                            background: #45a049;
-                        }
-                    """),
-                    Div(
-                        H2("Reservation Details", style="color: #fff; margin: 0;"),
-                        {"class": "header"}
-                    ),
-                    Body(
-                        Div(
-                            H3("Reservation Information", {"style": "color: #1C1C3B;"}),
-                            reservation_info,
-                            Button("Proceed to Payment", {"type": "button", "onclick": "window.location.href='/payment'"})
-                            , {"class": "content"}
-                        ),
-                        {"style": "background: #F5F5F5; padding: 20px; min-height: 100vh;"}
-                    )
-                )
+@rt('/pay', methods=["POST"])
+def build_reservation(car_id: str,start_date,end_date,promotion_code=None, insurance=None):
+
+    global date
+    date += reservation.count_date(start_date, end_date)
+
+    global total
+    for pro in company.get_promotions() :
+        if promotion_code == pro and insurance == None:
+            total = ((car.get_price() * date)-company.get_percent())
+        elif promotion_code == pro and insurance != None:
+            total = ((car.get_price() * date)-company.get_percent())+company.get_insurance().get_price()
+        elif promotion_code != pro and insurance == None:
+            total = (car.get_price() * date)
+        elif promotion_code != pro and insurance != None:
+            total = (car.get_price() * date)+company.get_insurance().get_price()
+    return RedirectResponse("/payment")
+
 
 serve()
